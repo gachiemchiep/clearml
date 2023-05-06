@@ -702,7 +702,20 @@ class LocalClearmlJob(ClearmlJob):
         env['CLEARML_LOG_TASK_TO_BACKEND'] = '1'
         env['CLEARML_SIMULATE_REMOTE_TASK'] = '1'
         self.task.mark_started()
-        self._job_process = subprocess.Popen(args=[python, local_filename], cwd=cwd, env=env)
+        # aaa this 
+
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2)                                      #2 Second Timeout
+        for port_num in range(29500, 29510):
+            result = sock.connect_ex(('127.0.0.1',80))
+            if result == 0:
+                break
+            else:
+                continue
+
+        cmd_line = "-m torch.distributed.launch --nnodes=1 --node_rank=0 --master_addr=127.0.0.1 --nproc_per_node=4 --master_port={} ".format(port_num)
+        self._job_process = subprocess.Popen(args=[python, cmd_line, local_filename], cwd=cwd, env=env)
         return True
 
     def wait_for_process(self, timeout=None):
